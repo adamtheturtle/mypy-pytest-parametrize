@@ -1,0 +1,1 @@
+Document installation from PyPI.
