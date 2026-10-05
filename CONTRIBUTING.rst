@@ -30,3 +30,7 @@ The manually dispatched ``Release`` workflow uses CalVer versions and Towncrier 
 It builds the distributions and publishes them to PyPI.
 PyPI publishing requires a trusted publisher configured for this repository, ``release.yml``, and the ``release`` environment.
 Set the repository secret ``RELEASE_PAT`` to a token that can push the changelog update to the protected default branch.
+
+Without ``RELEASE_PAT``, prepare the changelog in a pull request and wait for the required checks before merging.
+Tag the merge commit and create its GitHub release using the rendered Towncrier notes.
+Dispatch ``Release`` on that tag with ``publish_only`` enabled to build and publish the distributions.
