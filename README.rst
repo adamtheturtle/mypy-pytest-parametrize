@@ -1,4 +1,4 @@
-|Build Status|
+|Build Status| |PyPI|
 
 mypy-pytest-parametrize
 =======================
@@ -37,10 +37,9 @@ Installation
 
 .. code:: shell
 
-   pip install "git+https://github.com/adamtheturtle/mypy-pytest-parametrize.git"
+   pip install mypy-pytest-parametrize
 
 This is tested on Python 3.11+ with ``mypy`` 2.4 and ``pytest`` 9.1+.
-The package has not yet been published to PyPI.
 
 Configure ``mypy`` to use the plugin
 ------------------------------------
@@ -79,3 +78,5 @@ The plugin follows the proposal in `pytest issue #9334 <https://github.com/pytes
 
 .. |Build Status| image:: https://github.com/adamtheturtle/mypy-pytest-parametrize/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/mypy-pytest-parametrize/actions
+.. |PyPI| image:: https://badge.fury.io/py/mypy-pytest-parametrize.svg
+   :target: https://badge.fury.io/py/mypy-pytest-parametrize
