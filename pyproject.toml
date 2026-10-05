@@ -18,6 +18,11 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[project.urls]
+Source = "https://github.com/adamtheturtle/mypy-pytest-parametrize"
+Issues = "https://github.com/adamtheturtle/mypy-pytest-parametrize/issues"
+Documentation = "https://github.com/adamtheturtle/mypy-pytest-parametrize#readme"
+
 [dependency-groups]
 dev = ["pytest-cov==7.1.0", "ruff==0.16.10", "build==1.6.1"]
 

@@ -1,5 +1,7 @@
 # mypy-pytest-parametrize
 
+[![CI](https://github.com/adamtheturtle/mypy-pytest-parametrize/actions/workflows/ci.yml/badge.svg)](https://github.com/adamtheturtle/mypy-pytest-parametrize/actions/workflows/ci.yml)
+
 Check `pytest.mark.parametrize` values against the annotated parameters of the
 decorated test function. This implements the mypy plugin proposed in
 [pytest issue #9334](https://github.com/pytest-dev/pytest/issues/9334).
@@ -8,7 +10,13 @@ Requires Python 3.11+, mypy 2.4.x, and pytest 9.1+ (below 10).
 
 ## Install and configure
 
-From this checkout:
+Install from GitHub:
+
+```sh
+python -m pip install "git+https://github.com/adamtheturtle/mypy-pytest-parametrize.git"
+```
+
+Or install an editable copy from a checkout:
 
 ```sh
 python -m pip install -e .
@@ -96,6 +104,8 @@ uv build
 
 Tests run real mypy checks against pytest's installed annotations, including the
 original issue with the plugin enabled and disabled and warm-cache changes.
-GitHub Actions is configured to run the suite on Python 3.11 through 3.14 on Linux, macOS, and
-Windows. This initial version is developed locally and has not been published
-to PyPI.
+GitHub Actions is configured to run the suite on Python 3.11 through 3.14 on
+Linux, macOS, and Windows. The package has not yet been published to PyPI.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) to report bugs or contribute changes.
+This project is licensed under the [MIT License](LICENSE).
