@@ -14,6 +14,7 @@ from mypy.nodes import (
     Context,
     Decorator,
     Expression,
+    FuncDef,
     ListExpr,
     RefExpr,
     StarExpr,
@@ -62,29 +63,36 @@ def _argument(call: CallExpr, name: str, position: int) -> Expression | None:
 
 def _string(expr: Expression, ctx: mypy_plugin.MethodContext) -> str | None:
     """Read a literal string, including a Final literal alias."""
-    if isinstance(expr, StrExpr):
-        return expr.value
-    typ = get_proper_type(typ=ctx.api.get_expression_type(node=expr))
-    if isinstance(typ, Instance) and typ.last_known_value is not None:
-        typ = typ.last_known_value
-    if isinstance(typ, LiteralType) and isinstance(typ.value, str):
-        return typ.value
-    return None
+    match expr:
+        case StrExpr(value=value):
+            return value
+        case _:
+            typ = get_proper_type(typ=ctx.api.get_expression_type(node=expr))
+    match typ:
+        case (
+            Instance(last_known_value=LiteralType(value=str() as value))
+            | LiteralType(value=str() as value)
+        ):
+            return value
+        case _:
+            return None
 
 
 def _strings(
     expr: Expression, ctx: mypy_plugin.MethodContext
 ) -> list[str] | None:
     """Read a literal sequence of strings."""
-    if not isinstance(expr, (ListExpr, TupleExpr)):
-        return None
-    result: list[str] = []
-    for item in expr.items:
-        value = _string(expr=item, ctx=ctx)
-        if value is None:
+    match expr:
+        case ListExpr(items=items) | TupleExpr(items=items):
+            result: list[str] = []
+            for item in items:
+                value = _string(expr=item, ctx=ctx)
+                if value is None:
+                    return None
+                result.append(value)
+            return result
+        case _:
             return None
-        result.append(value)
-    return result
 
 
 def _names(
@@ -107,14 +115,13 @@ def _indirect(
     """Return excluded names, or None when fixture routing is not
     static.
     """
-    if expr is None:
-        return []
-    if isinstance(expr, RefExpr):
-        if expr.fullname == "builtins.False":
+    match expr:
+        case None | RefExpr(fullname="builtins.False"):
             return []
-        if expr.fullname == "builtins.True":
+        case RefExpr(fullname="builtins.True"):
             return None
-    return _strings(expr=expr, ctx=ctx)
+        case _:
+            return _strings(expr=expr, ctx=ctx)
 
 
 def _check_type(
@@ -179,13 +186,14 @@ def _is_parameter_set(typ: Type) -> bool:
     """Recognize pytest's named tuple, whose value types have been
     erased.
     """
-    proper = get_proper_type(typ=typ)
-    if isinstance(proper, TupleType):
-        proper = proper.partial_fallback
-    return (
-        isinstance(proper, Instance)
-        and proper.type.fullname == "_pytest.mark.structures.ParameterSet"
-    )
+    match get_proper_type(typ=typ):
+        case (
+            TupleType(partial_fallback=Instance(type=info))
+            | Instance(type=info)
+        ):
+            return info.fullname == "_pytest.mark.structures.ParameterSet"
+        case _:
+            return False
 
 
 @dataclass(frozen=True)
@@ -236,41 +244,43 @@ def _check_row_type(
     proper = get_proper_type(typ=typ)
     if isinstance(proper, AnyType) or _is_parameter_set(typ=typ):
         return
-    if isinstance(proper, UnionType):
-        for item in proper.items:
-            _check_row_type(
-                typ=item, parameters=parameters, location=location, ctx=ctx
-            )
-        return
-    if parameters.wrap:
-        name = parameters.names[0]
-        _check_type(
-            actual=typ,
-            expected=parameters.annotations[name],
-            name=name,
-            location=location,
-            ctx=ctx,
-        )
-        return
-    if isinstance(proper, TupleType):
-        _check_items(
-            items=proper.items,
-            parameters=parameters,
-            location=location,
-            ctx=ctx,
-        )
-        return
-    if isinstance(proper, Instance):
-        item_type = _element_type(typ=proper, base_name="typing.Sequence")
-        if item_type is not None:
-            for name, expected in parameters.annotations.items():
-                _check_type(
-                    actual=item_type,
-                    expected=expected,
-                    name=name,
-                    location=location,
-                    ctx=ctx,
+    match proper:
+        case UnionType(items=items):
+            for item in items:
+                _check_row_type(
+                    typ=item, parameters=parameters, location=location, ctx=ctx
                 )
+        case _ if parameters.wrap:
+            name = parameters.names[0]
+            _check_type(
+                actual=typ,
+                expected=parameters.annotations[name],
+                name=name,
+                location=location,
+                ctx=ctx,
+            )
+        case TupleType(items=items):
+            _check_items(
+                items=items,
+                parameters=parameters,
+                location=location,
+                ctx=ctx,
+            )
+        case Instance() as instance:
+            item_type = _element_type(
+                typ=instance, base_name="typing.Sequence"
+            )
+            if item_type is not None:
+                for name, expected in parameters.annotations.items():
+                    _check_type(
+                        actual=item_type,
+                        expected=expected,
+                        name=name,
+                        location=location,
+                        ctx=ctx,
+                    )
+        case _:
+            return
 
 
 def _param_values(call: CallExpr) -> list[Expression] | None:
@@ -306,43 +316,44 @@ def _check_row(
     *, row: Expression, parameters: _Parameters, ctx: mypy_plugin.MethodContext
 ) -> None:
     """Unpack explicit pytest.param calls and tuple-style rows."""
-    if (
-        isinstance(row, CallExpr)
-        and isinstance(row.callee, RefExpr)
-        and row.callee.fullname in _PARAM_FUNCTIONS
-    ):
-        values = _param_values(call=row)
-        if values is not None and _arity(
-            size=len(values), names=parameters.names, location=row, ctx=ctx
+    match row:
+        case CallExpr(callee=RefExpr(fullname=fullname)) as call if (
+            fullname in _PARAM_FUNCTIONS
         ):
-            _check_expressions(values=values, parameters=parameters, ctx=ctx)
-        return
-    if parameters.wrap:
-        if not _is_parameter_set(typ=ctx.api.get_expression_type(node=row)):
-            name = parameters.names[0]
-            _check_value(
-                expr=row,
-                expected=parameters.annotations[name],
-                name=name,
+            values = _param_values(call=call)
+            if values is not None and _arity(
+                size=len(values), names=parameters.names, location=row, ctx=ctx
+            ):
+                _check_expressions(
+                    values=values, parameters=parameters, ctx=ctx
+                )
+        case _ if parameters.wrap:
+            if not _is_parameter_set(
+                typ=ctx.api.get_expression_type(node=row)
+            ):
+                name = parameters.names[0]
+                _check_value(
+                    expr=row,
+                    expected=parameters.annotations[name],
+                    name=name,
+                    ctx=ctx,
+                )
+        case TupleExpr(items=items) | ListExpr(items=items):
+            if any(isinstance(item, StarExpr) for item in items):
+                return
+            if _arity(
+                size=len(items), names=parameters.names, location=row, ctx=ctx
+            ):
+                _check_expressions(
+                    values=items, parameters=parameters, ctx=ctx
+                )
+        case _:
+            _check_row_type(
+                typ=ctx.api.get_expression_type(node=row),
+                parameters=parameters,
+                location=row,
                 ctx=ctx,
             )
-        return
-    if isinstance(row, (TupleExpr, ListExpr)):
-        if any(isinstance(item, StarExpr) for item in row.items):
-            return
-        if _arity(
-            size=len(row.items), names=parameters.names, location=row, ctx=ctx
-        ):
-            _check_expressions(
-                values=row.items, parameters=parameters, ctx=ctx
-            )
-        return
-    _check_row_type(
-        typ=ctx.api.get_expression_type(node=row),
-        parameters=parameters,
-        location=row,
-        ctx=ctx,
-    )
 
 
 def _check_values(
@@ -352,25 +363,40 @@ def _check_values(
     ctx: mypy_plugin.MethodContext,
 ) -> None:
     """Check inline values or use a collection's inferred item type."""
-    if isinstance(values, (ListExpr, TupleExpr)):
-        for row in values.items:
-            if isinstance(row, StarExpr):
-                _check_values(values=row.expr, parameters=parameters, ctx=ctx)
-            else:
-                _check_row(row=row, parameters=parameters, ctx=ctx)
-        return
-    typ = get_proper_type(typ=ctx.api.get_expression_type(node=values))
-    if isinstance(typ, TupleType):
-        for row_type in typ.items:
-            _check_row_type(
-                typ=row_type, parameters=parameters, location=values, ctx=ctx
-            )
-    elif isinstance(typ, Instance):
-        item_type = _element_type(typ=typ, base_name="typing.Iterable")
-        if item_type is not None:
-            _check_row_type(
-                typ=item_type, parameters=parameters, location=values, ctx=ctx
-            )
+    match values:
+        case ListExpr(items=rows) | TupleExpr(items=rows):
+            for row in rows:
+                if isinstance(row, StarExpr):
+                    _check_values(
+                        values=row.expr, parameters=parameters, ctx=ctx
+                    )
+                else:
+                    _check_row(row=row, parameters=parameters, ctx=ctx)
+        case _:
+            match get_proper_type(
+                typ=ctx.api.get_expression_type(node=values)
+            ):
+                case TupleType(items=row_types):
+                    for row_type in row_types:
+                        _check_row_type(
+                            typ=row_type,
+                            parameters=parameters,
+                            location=values,
+                            ctx=ctx,
+                        )
+                case Instance() as instance:
+                    item_type = _element_type(
+                        typ=instance, base_name="typing.Iterable"
+                    )
+                    if item_type is not None:
+                        _check_row_type(
+                            typ=item_type,
+                            parameters=parameters,
+                            location=values,
+                            ctx=ctx,
+                        )
+                case _:
+                    return
 
 
 def _check_decorator(
@@ -426,28 +452,34 @@ def _check_mark(ctx: mypy_plugin.MethodContext) -> Type:
     """Inspect a mark application without altering the decorated function
     type.
     """
-    if not isinstance(ctx.context, Decorator):
-        return ctx.default_return_type
-    signature = ctx.context.func.type
-    if not isinstance(signature, CallableType):
-        return ctx.default_return_type
-    argument = ctx.args[0][0]
-    for decorator in ctx.context.decorators:
-        if isinstance(decorator, CallExpr) and (
-            decorator.line,
-            decorator.column,
-        ) == (
-            argument.line,
-            argument.column,
+    match ctx.context:
+        case Decorator(
+            func=FuncDef(type=CallableType() as signature),
+            decorators=decorators,
         ):
-            callee_type = get_proper_type(
-                typ=ctx.api.get_expression_type(node=decorator.callee)
-            )
-            if (
-                isinstance(callee_type, Instance)
-                and callee_type.type.fullname == _PARAMETRIZE_MARK
-            ):
-                _check_decorator(call=decorator, signature=signature, ctx=ctx)
+            argument = ctx.args[0][0]
+            for decorator in decorators:
+                match decorator:
+                    case (
+                        CallExpr(
+                            line=line, column=column, callee=callee
+                        ) as call
+                    ) if (line, column) == (argument.line, argument.column):
+                        match get_proper_type(
+                            typ=ctx.api.get_expression_type(node=callee)
+                        ):
+                            case Instance(type=info) if (
+                                info.fullname == _PARAMETRIZE_MARK
+                            ):
+                                _check_decorator(
+                                    call=call, signature=signature, ctx=ctx
+                                )
+                            case _:
+                                continue
+                    case _:
+                        continue
+        case _:
+            return ctx.default_return_type
     return ctx.default_return_type
 
 
