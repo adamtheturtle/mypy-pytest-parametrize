@@ -1,4 +1,4 @@
-"""Mypy hooks for checking direct pytest parametrization."""
+"""Mypy hooks for checking direct pytest and Karva parametrization."""
 
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -36,12 +36,23 @@ from typing_extensions import override
 
 PARAMETRIZE = ErrorCode(
     code="pytest-parametrize",
-    description="Invalid direct pytest parametrization",
+    description="Invalid direct pytest or Karva parametrization",
     category="General",
 )
-_MARK_CALL = "_pytest.mark.structures.MarkDecorator.__call__"
+_MARK_CALLS = frozenset(
+    {
+        "_pytest.mark.structures.MarkDecorator.__call__",
+        "karva._karva.Tags.__call__",
+    }
+)
 _PARAMETRIZE_MARK = "_pytest.mark.structures._ParametrizeMarkDecorator"
-_PARAM_FUNCTIONS = frozenset({"_pytest.mark.param", "pytest.param"})
+_KARVA_PARAMETRIZE = "karva._karva.tags.parametrize"
+_PARAM_FUNCTIONS = frozenset(
+    {"_pytest.mark.param", "pytest.param", "karva._karva.param"}
+)
+_PARAMETER_SETS = frozenset(
+    {"_pytest.mark.structures.ParameterSet", "karva._karva.Param"}
+)
 
 
 def _argument(call: CallExpr, name: str, position: int) -> Expression | None:
@@ -96,17 +107,22 @@ def _strings(
 
 
 def _names(
-    expr: Expression, ctx: mypy_plugin.MethodContext
+    expr: Expression, ctx: mypy_plugin.MethodContext, *, karva: bool
 ) -> tuple[list[str], bool] | None:
-    """Return parameter names and pytest's single-value wrapping rule."""
+    """Return parameter names and the framework's wrapping rule."""
     text = _string(expr=expr, ctx=ctx)
     if text is not None:
+        if karva:
+            names = [name.strip() for name in text.split(sep=",")]
+            return names, len(names) == 1
         names = [
             name.strip() for name in text.split(sep=",") if name.strip() != ""
         ]
         return names, len(names) == 1 and not text.rstrip().endswith(",")
     sequence = _strings(expr=expr, ctx=ctx)
-    return None if sequence is None else (sequence, False)
+    return (
+        None if sequence is None else (sequence, karva and len(sequence) == 1)
+    )
 
 
 def _indirect(
@@ -183,15 +199,13 @@ def _element_type(typ: Instance, base_name: str) -> Type | None:
 
 
 def _is_parameter_set(typ: Type) -> bool:
-    """Recognize pytest's named tuple, whose value types have been
-    erased.
-    """
+    """Recognize parameter objects whose individual types are erased."""
     match get_proper_type(typ=typ):
         case (
             TupleType(partial_fallback=Instance(type=info))
             | Instance(type=info)
         ):
-            return info.fullname == "_pytest.mark.structures.ParameterSet"
+            return info.fullname in _PARAMETER_SETS
         case _:
             return False
 
@@ -284,7 +298,7 @@ def _check_row_type(
 
 
 def _param_values(call: CallExpr) -> list[Expression] | None:
-    """Extract pytest.param values unless a starred argument prevents
+    """Extract param values unless a starred argument prevents
     mapping.
     """
     if any(
@@ -315,7 +329,7 @@ def _check_expressions(
 def _check_row(
     *, row: Expression, parameters: _Parameters, ctx: mypy_plugin.MethodContext
 ) -> None:
-    """Unpack explicit pytest.param calls and tuple-style rows."""
+    """Unpack explicit param calls and tuple-style rows."""
     match row:
         case CallExpr(callee=RefExpr(fullname=fullname)) as call if (
             fullname in _PARAM_FUNCTIONS
@@ -400,18 +414,30 @@ def _check_values(
 
 
 def _check_decorator(
-    call: CallExpr, signature: CallableType, ctx: mypy_plugin.MethodContext
+    call: CallExpr,
+    signature: CallableType,
+    ctx: mypy_plugin.MethodContext,
+    *,
+    karva: bool,
 ) -> None:
     """Associate direct parameter names with the test's original
     annotations.
     """
-    names_expr = _argument(call=call, name="argnames", position=0)
-    values = _argument(call=call, name="argvalues", position=1)
+    names_expr = _argument(
+        call=call, name="arg_names" if karva else "argnames", position=0
+    )
+    values = _argument(
+        call=call, name="arg_values" if karva else "argvalues", position=1
+    )
     if names_expr is None or values is None:
         return
-    parsed = _names(expr=names_expr, ctx=ctx)
-    excluded = _indirect(
-        expr=_argument(call=call, name="indirect", position=2), ctx=ctx
+    parsed = _names(expr=names_expr, ctx=ctx, karva=karva)
+    excluded: list[str] | None = (
+        []
+        if karva
+        else _indirect(
+            expr=_argument(call=call, name="indirect", position=2), ctx=ctx
+        )
     )
     if parsed is None or excluded is None:
         return
@@ -465,6 +491,19 @@ def _check_mark(ctx: mypy_plugin.MethodContext) -> Type:
                             line=line, column=column, callee=callee
                         ) as call
                     ) if (line, column) == (argument.line, argument.column):
+                        match callee:
+                            case RefExpr(fullname=fullname) if (
+                                fullname == _KARVA_PARAMETRIZE
+                            ):
+                                _check_decorator(
+                                    call=call,
+                                    signature=signature,
+                                    ctx=ctx,
+                                    karva=True,
+                                )
+                                continue
+                            case _:
+                                pass
                         match get_proper_type(
                             typ=ctx.api.get_expression_type(node=callee)
                         ):
@@ -472,7 +511,10 @@ def _check_mark(ctx: mypy_plugin.MethodContext) -> Type:
                                 info.fullname == _PARAMETRIZE_MARK
                             ):
                                 _check_decorator(
-                                    call=call, signature=signature, ctx=ctx
+                                    call=call,
+                                    signature=signature,
+                                    ctx=ctx,
+                                    karva=False,
                                 )
                             case _:
                                 continue
@@ -484,7 +526,7 @@ def _check_mark(ctx: mypy_plugin.MethodContext) -> Type:
 
 
 class ParametrizePlugin(mypy_plugin.Plugin):
-    """Validate pytest marks when mypy applies decorators to test
+    """Validate parametrization when mypy applies decorators to test
     functions.
     """
 
@@ -492,8 +534,8 @@ class ParametrizePlugin(mypy_plugin.Plugin):
     def get_method_hook(
         self, fullname: str
     ) -> Callable[[mypy_plugin.MethodContext], Type] | None:
-        """Register only the pytest mark application hook."""
-        return _check_mark if fullname == _MARK_CALL else None
+        """Register the pytest mark and Karva tag application hooks."""
+        return _check_mark if fullname in _MARK_CALLS else None
 
 
 def plugin(_version: str) -> type[mypy_plugin.Plugin]:

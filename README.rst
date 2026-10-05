@@ -3,7 +3,7 @@
 mypy-pytest-parametrize
 =======================
 
-Check ``pytest.mark.parametrize`` values against test annotations.
+Check ``pytest.mark.parametrize`` and ``karva.tags.parametrize`` values against test annotations.
 
 For example, this plugin reports the ``float`` passed to a parameter annotated as ``int``:
 
@@ -61,6 +61,18 @@ Add the plugin to your `mypy configuration file <https://mypy.readthedocs.io/en/
    [mypy]
    plugins = mypy_pytest_parametrize
 
+Karva
+-----
+
+The same plugin configuration checks `Karva <https://github.com/MatthewMckee4/karva>`__ tests using ``@karva.tags.parametrize``.
+It supports Karva's ``arg_names`` and ``arg_values`` keywords, stacked tags, and inline ``karva.param`` calls with IDs or tags.
+Karva must be installed in the environment where ``mypy`` runs.
+
+For a single parameter, Karva treats each row as the parameter's value even when the name is supplied as a list or tuple.
+For example, ``@karva.tags.parametrize(["value"], [(1, "x")])`` supplies a ``tuple[int, str]`` to ``value``.
+
+Karva diagnostics use the existing ``pytest-parametrize`` error code.
+
 Indirect fixtures and static limits
 -----------------------------------
 
@@ -69,7 +81,7 @@ With ``indirect=["fixture_name"]``, the other parameters are still checked.
 
 Parameter names and fixture routing determined at runtime are not checked.
 Stored decorator objects and class-level parametrization are also excluded.
-Stored ``pytest.param`` objects and starred values within a row are also skipped when their individual types are unavailable.
+Stored ``pytest.param`` and ``karva.param`` objects and starred values within a row are also skipped when their individual types are unavailable.
 Values typed as ``Any`` retain ``mypy``'s usual behavior.
 
 The plugin follows the proposal in `pytest issue #9334 <https://github.com/pytest-dev/pytest/issues/9334>`__.

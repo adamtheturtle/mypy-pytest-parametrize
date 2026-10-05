@@ -683,3 +683,221 @@
     import pytest
     @pytest.mark.parametrize("x", ["input"], indirect=["x"])
     def test_value(x: int) -> None: ...
+- case: karva_values
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    @karva.tags.parametrize("x, y", [(1, "a"), karva.param(2, "b", id="two", tags=[karva.tags.skip])])
+    def test_value(x: int, y: str) -> None: ...
+- case: karva_float_for_integer
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    @karva.tags.parametrize("value", [1, 2.5])
+    def test_value(value: int) -> None: ...
+  out: 'main:2: error: Parametrized value for "value" has type "float"; expected "int"  [pytest-parametrize]'
+- case: karva_keyword_arguments_and_positional_ids
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    @karva.tags.parametrize(arg_values=["bad"], arg_names="value", ids=["bad"])
+    def test_keyword(value: int) -> None: ...
+    @karva.tags.parametrize("value", ["bad"], ["bad"])
+    def test_positional(value: int) -> None: ...
+  out: |-
+    main:2: error: Parametrized value for "value" has type "str"; expected "int"  [pytest-parametrize]
+    main:4: error: Parametrized value for "value" has type "str"; expected "int"  [pytest-parametrize]
+- case: karva_single_name_sequence
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    @karva.tags.parametrize(("value",), [(1, "x")])
+    def test_tuple(value: tuple[int, str]) -> None: ...
+    @karva.tags.parametrize(["value"], [[1], []])
+    def test_list(value: list[int]) -> None: ...
+    @karva.tags.parametrize(["value"], [1])
+    def test_scalar(value: int) -> None: ...
+- case: karva_single_name_sequence_incompatible
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    @karva.tags.parametrize(("value",), ["bad"])
+    def test_value(value: int) -> None: ...
+  out: 'main:2: error: Parametrized value for "value" has type "str"; expected "int"  [pytest-parametrize]'
+- case: karva_param_incompatible_column
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    @karva.tags.parametrize("x,y", [karva.param(1, False, id="bad", tags=[karva.tags.skip])])
+    def test_value(x: int, y: str) -> None: ...
+  out: 'main:2: error: Parametrized value for "y" has type "bool"; expected "str"  [pytest-parametrize]'
+- case: karva_param_arity
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    @karva.tags.parametrize("value", [karva.param(1, 2)])
+    def test_value(value: int) -> None: ...
+  out: 'main:2: error: Parametrized row has 2 values for 1 parameter names  [pytest-parametrize]'
+- case: karva_literal_arity
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    @karva.tags.parametrize("x,y", [(1,)])
+    def test_value(x: int, y: str) -> None: ...
+  out: 'main:2: error: Parametrized row has 1 values for 2 parameter names  [pytest-parametrize]'
+- case: karva_import_aliases
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    from karva import tags as t, param as p
+    from karva._karva.tags import parametrize as cases
+    @t.parametrize("x", [p("bad")])
+    def test_tags(x: int) -> None: ...
+    @cases("x", ["bad"])
+    def test_direct(x: int) -> None: ...
+  out: |-
+    main:3: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]
+    main:5: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]
+- case: karva_stacked_and_mixed_decorators
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    import pytest
+    @karva.tags.skip(True)
+    @karva.tags.parametrize("x", ["bad"])
+    @karva.tags.parametrize("y", [False])
+    def test_stacked(x: int, y: str) -> None: ...
+    @karva.tags.parametrize("x", ["bad"])
+    @pytest.mark.parametrize("y", [False])
+    def test_mixed(x: int, y: str) -> None: ...
+  out: |-
+    main:4: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]
+    main:5: error: Parametrized value for "y" has type "bool"; expected "str"  [pytest-parametrize]
+    main:7: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]
+    main:8: error: Parametrized value for "y" has type "bool"; expected "str"  [pytest-parametrize]
+- case: karva_named_values
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    values: list[str] = ["bad"]
+    @karva.tags.parametrize(["x"], values)
+    def test_value(x: int) -> None: ...
+  out: 'main:3: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]'
+- case: karva_stored_parameter_sets
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    case = karva.param(1, "x")
+    cases = [case]
+    @karva.tags.parametrize("x,y", [case])
+    def test_inline(x: int, y: str) -> None: ...
+    @karva.tags.parametrize("x,y", cases)
+    def test_named(x: int, y: str) -> None: ...
+    @karva.tags.parametrize("x", [case])
+    def test_single(x: int) -> None: ...
+- case: karva_static_names
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    from typing import Final
+    import karva
+    name: Final = "x"
+    @karva.tags.parametrize(name, ["bad"])
+    def test_value(x: int) -> None: ...
+  out: 'main:4: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]'
+- case: karva_duplicate_and_missing_names
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    @karva.tags.parametrize("x,x", [(1, 2)])
+    def test_duplicate(x: int) -> None: ...
+    @karva.tags.parametrize("missing", [1])
+    def test_missing(x: int) -> None: ...
+  out: |-
+    main:2: error: Duplicate parametrized argument names  [pytest-parametrize]
+    main:4: error: Test function has no parameter named "missing"  [pytest-parametrize]
+- case: karva_dynamic_names_and_stored_decorator
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    def name() -> str: return "x"
+    @karva.tags.parametrize(name(), ["bad"])
+    def test_dynamic(x: int) -> None: ...
+    cases = karva.tags.parametrize("x", ["bad"])
+    @cases
+    def test_stored(x: int) -> None: ...
+- case: karva_preserved_signature
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    @karva.tags.parametrize("x", [1])
+    def test_value(x: int) -> str: return str(x)
+    reveal_type(test_value)
+    test_value("bad")
+  out: |-
+    main:4: note: Revealed type is "def (x: int) -> str"
+    main:5: error: Argument 1 to "test_value" has incompatible type "str"; expected "int"  [arg-type]
+- case: karva_pytest_param_compatibility
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    import pytest
+    @karva.tags.parametrize("x", [pytest.param("bad", id="bad")])
+    def test_value(x: int) -> None: ...
+  out: 'main:3: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]'
+- case: karva_async_method_and_unrelated_tags
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    class TestExample:
+        @karva.tags.parametrize("x", ["bad"])
+        @karva.tags.timeout(1)
+        async def test_value(self, x: int) -> None: ...
+    @karva.tags.use_fixtures("missing")
+    def test_fixture() -> None: ...
+  out: 'main:3: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]'
+- case: karva_trailing_comma
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import karva
+    @karva.tags.parametrize("x,", [(1,)])
+    def test_value(x: int) -> None: ...
+  out: |-
+    main:2: error: Test function has no parameter named ""  [pytest-parametrize]
+    main:2: error: Parametrized row has 1 values for 2 parameter names  [pytest-parametrize]
