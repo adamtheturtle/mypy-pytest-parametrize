@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from textwrap import dedent
 
+import pytest
 from mypy import api
 
 
@@ -40,13 +41,17 @@ def _run(
     return messages, stderr, status
 
 
-def test_original_issue(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "decorator", ["pytest.mark.parametrize", "karva.tags.parametrize"]
+)
+def test_original_issue(tmp_path: Path, decorator: str) -> None:
     """The original reproduction only fails when the plugin is enabled."""
     source = """
         import pytest
-        @pytest.mark.parametrize("arg", [123, 456.789])
+        import karva
+        @DECORATOR("arg", [123, 456.789])
         def test_foo(arg: int) -> None: ...
-    """
+    """.replace("DECORATOR", decorator)
     assert _run(tmp_path=tmp_path, source=source, enabled=False) == ([], "", 0)
     assert _run(tmp_path=tmp_path, source=source, enabled=True) == (
         [
@@ -60,13 +65,17 @@ def test_original_issue(tmp_path: Path) -> None:
     )
 
 
-def test_incremental_change(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "decorator", ["pytest.mark.parametrize", "karva.tags.parametrize"]
+)
+def test_incremental_change(tmp_path: Path, decorator: str) -> None:
     """A warm cache must not hide a newly incompatible parameter value."""
     source = """
         import pytest
-        @pytest.mark.parametrize("x", [VALUE])
+        import karva
+        @DECORATOR("x", [VALUE])
         def test_value(x: int) -> None: ...
-    """
+    """.replace("DECORATOR", decorator)
     assert _run(
         tmp_path=tmp_path, source=source.replace("VALUE", "1"), enabled=True
     ) == ([], "", 0)

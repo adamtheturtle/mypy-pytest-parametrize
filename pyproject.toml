@@ -7,7 +7,7 @@ requires = [
 
 [project]
 name = "mypy-pytest-parametrize"
-description = "Check pytest parametrized values against test annotations."
+description = "Check pytest and Karva parametrized values against test annotations."
 readme = { file = "README.rst", content-type = "text/x-rst" }
 keywords = [
     "mypy",
@@ -52,6 +52,7 @@ dev = [
     "doc8==2.0.0",
     "doccmd==2026.9.16.1",
     "interrogate==1.7.0",
+    "karva==0.0.1a12",
     "mypy==2.4.0",
     "no-defaults==2026.9.1",
     "prek==0.5.4",
