@@ -1,0 +1,685 @@
+- case: integer_values
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [1, 2])
+    def test_value(value: int) -> None: ...
+- case: boolean_is_integer_subtype
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [True])
+    def test_value(value: int) -> None: ...
+- case: integer_values_for_float
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [1, 2.5])
+    def test_value(value: float) -> None: ...
+- case: optional_values
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [None, 1])
+    def test_value(value: int | None) -> None: ...
+- case: union_values
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [1, "x"])
+    def test_value(value: int | str) -> None: ...
+- case: single_tuple_value
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [(1, "x")])
+    def test_value(value: tuple[int, str]) -> None: ...
+- case: contextual_lists
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [[1], []])
+    def test_value(value: list[int]) -> None: ...
+- case: contextual_dictionaries
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [{"x": 1}, {}])
+    def test_value(value: dict[str, int]) -> None: ...
+- case: multiple_names
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x, y", [(1, "a"), (2, "b")])
+    def test_value(x: int, y: str) -> None: ...
+- case: list_names_and_rows
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize(["x", "y"], [[1, "a"]])
+    def test_value(x: int, y: str) -> None: ...
+- case: single_name_sequence
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize(("value",), [(1,)])
+    def test_value(value: int) -> None: ...
+- case: trailing_comma
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value,", [(1,)])
+    def test_value(value: int) -> None: ...
+- case: whitespace_in_names
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize(" value , other ", [(1, "a")])
+    def test_value(value: int, other: str) -> None: ...
+- case: pytest_param_marks_and_ids
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [pytest.param(1, id="one", marks=pytest.mark.skip)])
+    def test_value(value: int) -> None: ...
+- case: pytest_param_multiple_values
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x,y", [pytest.param(1, "a", id="one")])
+    def test_value(x: int, y: str) -> None: ...
+- case: keyword_arguments
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize(argnames="value", argvalues=[1])
+    def test_value(value: int) -> None: ...
+- case: keyword_values
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", argvalues=[1])
+    def test_value(value: int) -> None: ...
+- case: indirect_fixture
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", ["input"], indirect=True)
+    def test_value(value: int) -> None: ...
+- case: mixed_indirect_fixture
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x, y", [("input", 1)], indirect=["x"])
+    def test_value(x: int, y: int) -> None: ...
+- case: empty_cases
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [])
+    def test_value(value: int) -> None: ...
+- case: explicit_direct_values
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [1], indirect=False)
+    def test_value(value: int) -> None: ...
+- case: unannotated_parameter
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [1])
+    def test_value(value) -> None: ...
+- case: float_for_integer
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [1, 2.5])
+    def test_value(value: int) -> None: ...
+  out: 'main:2: error: Parametrized value for "value" has type "float"; expected "int"  [pytest-parametrize]'
+- case: string_for_integer
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", ["x"])
+    def test_value(value: int) -> None: ...
+  out: 'main:2: error: Parametrized value for "value" has type "str"; expected "int"  [pytest-parametrize]'
+- case: multiple_incompatible_values
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x, y", [(1, False), (1, 123)])
+    def test_value(x: int, y: str) -> None: ...
+  out: |-
+    main:2: error: Parametrized value for "y" has type "bool"; expected "str"  [pytest-parametrize]
+    main:2: error: Parametrized value for "y" has type "int"; expected "str"  [pytest-parametrize]
+- case: pytest_param_incompatible_value
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [pytest.param("x", id="bad")])
+    def test_value(value: int) -> None: ...
+  out: 'main:2: error: Parametrized value for "value" has type "str"; expected "int"  [pytest-parametrize]'
+- case: pytest_param_incompatible_column
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x,y", [pytest.param(1, False)])
+    def test_value(x: int, y: str) -> None: ...
+  out: 'main:2: error: Parametrized value for "y" has type "bool"; expected "str"  [pytest-parametrize]'
+- case: literal_row_arity
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x,y", [(1,)])
+    def test_value(x: int, y: str) -> None: ...
+  out: 'main:2: error: Parametrized row has 1 values for 2 parameter names  [pytest-parametrize]'
+- case: pytest_param_arity
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value", [pytest.param(1, 2)])
+    def test_value(value: int) -> None: ...
+  out: 'main:2: error: Parametrized row has 2 values for 1 parameter names  [pytest-parametrize]'
+- case: missing_parameter
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("absent", [1])
+    def test_value(value: int) -> None: ...
+  out: 'main:2: error: Test function has no parameter named "absent"  [pytest-parametrize]'
+- case: duplicate_names
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("value,value", [(1, 2)])
+    def test_value(value: int) -> None: ...
+  out: 'main:2: error: Duplicate parametrized argument names  [pytest-parametrize]'
+- case: mixed_indirect_incompatible_value
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x,y", [("input", "bad")], indirect=["x"])
+    def test_value(x: int, y: int) -> None: ...
+  out: 'main:2: error: Parametrized value for "y" has type "str"; expected "int"  [pytest-parametrize]'
+- case: stacked_and_unrelated_marks
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.skipif(True, reason="example")
+    @pytest.mark.parametrize("x", ["bad"])
+    @pytest.mark.parametrize("y", [1])
+    def test_value(x: int, y: str) -> None: ...
+  out: |-
+    main:3: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]
+    main:4: error: Parametrized value for "y" has type "int"; expected "str"  [pytest-parametrize]
+- case: pytest_alias
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest as pt
+    @pt.mark.parametrize("x", ["bad"])
+    def test_value(x: int) -> None: ...
+  out: 'main:2: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]'
+- case: mark_alias
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    from pytest import mark
+    @mark.parametrize("x", ["bad"])
+    def test_value(x: int) -> None: ...
+  out: 'main:2: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]'
+- case: parametrize_alias
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    from pytest import mark
+    parametrize = mark.parametrize
+    @parametrize("x", ["bad"])
+    def test_value(x: int) -> None: ...
+  out: 'main:3: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]'
+- case: final_name_alias
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    from typing import Final
+    NAME: Final = "x"
+    @pytest.mark.parametrize(NAME, ["bad"])
+    def test_value(x: int) -> None: ...
+  out: 'main:4: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]'
+- case: named_integer_list
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    cases: list[int] = [1]
+    @pytest.mark.parametrize("x", cases)
+    def test_value(x: int) -> None: ...
+- case: named_incompatible_list
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    cases: list[str] = ["bad"]
+    @pytest.mark.parametrize("x", cases)
+    def test_value(x: int) -> None: ...
+  out: 'main:3: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]'
+- case: named_heterogeneous_tuple
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    cases: tuple[int, str] = (1, "bad")
+    @pytest.mark.parametrize("x", cases)
+    def test_value(x: int) -> None: ...
+  out: 'main:3: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]'
+- case: named_rows
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    cases: list[tuple[int, str]] = [(1, "a")]
+    @pytest.mark.parametrize("x, y", cases)
+    def test_value(x: str, y: int) -> None: ...
+  out: |-
+    main:3: error: Parametrized value for "x" has type "int"; expected "str"  [pytest-parametrize]
+    main:3: error: Parametrized value for "y" has type "str"; expected "int"  [pytest-parametrize]
+- case: async_method
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    class TestCases:
+        @pytest.mark.parametrize("x", ["bad"])
+        async def test_value(self, x: int) -> None: ...
+  out: 'main:3: error: Parametrized value for "x" has type "str"; expected "int"  [pytest-parametrize]'
+- case: any_collection
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    from typing import Any
+    cases: Any = ["bad"]
+    @pytest.mark.parametrize("x", cases)
+    def test_value(x: int) -> None: ...
+- case: dynamic_names
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    def names() -> str: return "x"
+    @pytest.mark.parametrize(names(), ["bad"])
+    def test_value(x: int) -> None: ...
+- case: dynamic_indirect
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    def indirect() -> bool: return True
+    @pytest.mark.parametrize("x", ["input"], indirect=indirect())
+    def test_value(x: int) -> None: ...
+- case: stored_single_parameter_set
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    case = pytest.param(1)
+    @pytest.mark.parametrize("x", [case])
+    def test_value(x: int) -> None: ...
+- case: literal_annotation
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    from typing import Literal
+    @pytest.mark.parametrize("x", ["ok"])
+    def test_value(x: Literal["ok"]) -> None: ...
+- case: preserved_function_signature
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x", [1])
+    def test_value(x: int) -> None: ...
+    test_value("bad")
+  out: 'main:4: error: Argument 1 to "test_value" has incompatible type "str"; expected "int"  [arg-type]'
+- case: protocol_annotation
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    from typing import Protocol
+    class Named(Protocol):
+        @property
+        def name(self) -> str: ...
+    class Person:
+        name: str = "Ada"
+    @pytest.mark.parametrize("x", [Person()])
+    def test_value(x: Named) -> None: ...
+- case: pytest_param_alias
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    from pytest import param as case
+    @pytest.mark.parametrize("x", [case(1)])
+    def test_value(x: int) -> None: ...
+- case: starred_case_collection
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x", [*[1, 2]])
+    def test_value(x: int) -> None: ...
+- case: any_value
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    from typing import Any
+    value: Any = "unknown"
+    @pytest.mark.parametrize("x", [value])
+    def test_value(x: int) -> None: ...
+- case: iterable_factory
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    from collections.abc import Iterable
+    def cases() -> Iterable[int]: return [1, 2]
+    @pytest.mark.parametrize("x", cases())
+    def test_value(x: int) -> None: ...
+- case: homogeneous_sequence_rows
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    cases: list[list[int]] = [[1, 2]]
+    @pytest.mark.parametrize("x,y", cases)
+    def test_value(x: int, y: int) -> None: ...
+- case: union_rows
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    cases: list[tuple[int, str] | tuple[int, int]] = [(1, "x")]
+    @pytest.mark.parametrize("x,y", cases)
+    def test_value(x: int, y: str | int) -> None: ...
+- case: starred_pytest_param
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x", [pytest.param(*[1])])
+    def test_value(x: int) -> None: ...
+- case: starred_tuple_row
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    args = [1]
+    @pytest.mark.parametrize(("x", "y"), [(*args, "y")])
+    def test_value(x: int, y: str) -> None: ...
+- case: typed_dict_context
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    from typing import TypedDict
+    class Record(TypedDict):
+        name: str
+    @pytest.mark.parametrize("x", [{"name": "Ada"}])
+    def test_value(x: Record) -> None: ...
+- case: disabled_error_code
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    # mypy: disable-error-code="pytest-parametrize"
+    import pytest
+    @pytest.mark.parametrize("x", ["bad"])
+    def test_value(x: int) -> None: ...
+- case: invalid_nested_containers
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    from typing import TypedDict
+    class Record(TypedDict):
+        name: str
+    @pytest.mark.parametrize("x", [["bad"]])
+    def test_list(x: list[int]) -> None: ...
+    @pytest.mark.parametrize("x", [{"name": 1}])
+    def test_record(x: Record) -> None: ...
+  out: |-
+    main:5: error: List item 0 has incompatible type "str"; expected "int"  [list-item]
+    main:7: error: Incompatible types (expression has type "int", TypedDict item "name" has type "str")  [typeddict-item]
+- case: stored_parameter_sets
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    case = pytest.param(1, "x")
+    cases = [case]
+    @pytest.mark.parametrize("x,y", [case])
+    def test_inline(x: int, y: str) -> None: ...
+    @pytest.mark.parametrize("x,y", cases)
+    def test_named(x: int, y: str) -> None: ...
+- case: dynamic_name_in_sequence
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    def name() -> str: return "x"
+    @pytest.mark.parametrize((name(), "y"), [(1, 2)])
+    def test_value(x: str, y: str) -> None: ...
+- case: indirect_variable
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    indirect: bool = True
+    @pytest.mark.parametrize("x", ["input"], indirect=indirect)
+    def test_value(x: int) -> None: ...
+- case: named_row_arity
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    cases: list[tuple[int]] = [(1,)]
+    @pytest.mark.parametrize("x,y", cases)
+    def test_value(x: int, y: str) -> None: ...
+  out: 'main:3: error: Parametrized row has 1 values for 2 parameter names  [pytest-parametrize]'
+- case: named_rows_with_indirect_parameter
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    cases: list[tuple[str, int]] = [("input", 1)]
+    @pytest.mark.parametrize("x,y", cases, indirect=["x"])
+    def test_value(x: int, y: int) -> None: ...
+- case: named_any_row
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    from typing import Any
+    row: Any = (1, "x")
+    @pytest.mark.parametrize("x,y", [row])
+    def test_value(x: int, y: str) -> None: ...
+- case: opaque_row
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    row: object = (1, "x")
+    @pytest.mark.parametrize("x,y", [row])
+    def test_value(x: int, y: str) -> None: ...
+- case: none_row
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x,y", [None])
+    def test_value(x: int, y: str) -> None: ...
+- case: non_iterable_values_keep_pytest_diagnostic
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x", object())
+    def test_value(x: int) -> None: ...
+  out: 'main:2: error: Argument 2 to "__call__" of "_ParametrizeMarkDecorator" has incompatible type "object"; expected "Iterable[ParameterSet | Sequence[object] | object]"  [arg-type]'
+- case: missing_parametrize_arguments_keep_pytest_diagnostic
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize()
+    def test_value(x: int) -> None: ...
+  out: 'main:2: error: Missing positional arguments "argnames", "argvalues" in call to "__call__" of "_ParametrizeMarkDecorator"  [call-arg]'
+- case: empty_parameter_names
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("", [])
+    def test_value() -> None: ...
+- case: direct_marker_call
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    marker = pytest.mark.parametrize("x", [1])
+    def test_value(x: int) -> None: ...
+    marked = marker(test_value)
+    marked(1)
+- case: unannotated_function
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x", [1])
+    def test_value(x): ...
+- case: plain_marker
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.skip
+    def test_value(x: int) -> None: ...
+- case: all_parameters_indirect
+  mypy_config: |-
+    [mypy]
+    plugins = mypy_pytest_parametrize
+  main: |-
+    import pytest
+    @pytest.mark.parametrize("x", ["input"], indirect=["x"])
+    def test_value(x: int) -> None: ...
