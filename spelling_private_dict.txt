@@ -1,0 +1,15 @@
+CalVer
+Mypy
+ParameterSet
+Parametrize
+argnames
+argvalues
+isort
+kwargs
+mypy
+mypy's
+parametrization
+parametrize
+parametrized
+pytest
+pytest's

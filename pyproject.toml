@@ -1,44 +1,435 @@
 [build-system]
-requires = ["hatchling>=1.27"]
-build-backend = "hatchling.build"
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools",
+    "setuptools-scm>=8.1.0",
+]
 
 [project]
 name = "mypy-pytest-parametrize"
-version = "0.1.0"
-description = "Check pytest parametrized values against test annotations with mypy."
-readme = "README.md"
+description = "Check pytest parametrized values against test annotations."
+readme = { file = "README.rst", content-type = "text/x-rst" }
+keywords = [
+    "mypy",
+]
+license = { file = "LICENSE" }
+authors = [
+    { name = "Adam Dangoor", email = "adamdangoor@gmail.com" },
+]
 requires-python = ">=3.11"
-license = "MIT"
-authors = [{name = "Adam Dangoor", email = "adamdangoor@gmail.com"}]
-dependencies = ["mypy>=2.4,<2.5", "pytest>=9.1,<10"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Framework :: Pytest",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
     "Programming Language :: Python :: 3 :: Only",
-    "Typing :: Typed",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
-
-[project.urls]
-Source = "https://github.com/adamtheturtle/mypy-pytest-parametrize"
-Issues = "https://github.com/adamtheturtle/mypy-pytest-parametrize/issues"
-Documentation = "https://github.com/adamtheturtle/mypy-pytest-parametrize#readme"
+dynamic = [
+    "version",
+]
+dependencies = [
+    "mypy>=2.4.0,<2.5",
+    "pytest>=9.1.0,<10",
+    "typing-extensions>=4.4.0",
+]
+urls.Documentation = "https://github.com/adamtheturtle/mypy-pytest-parametrize#readme"
+urls.Issues = "https://github.com/adamtheturtle/mypy-pytest-parametrize/issues"
+urls.Source = "https://github.com/adamtheturtle/mypy-pytest-parametrize"
+entry-points."mypy.plugins".mypy_pytest_parametrize = "mypy_pytest_parametrize.plugin:plugin"
 
 [dependency-groups]
-dev = ["pytest-cov==7.1.0", "ruff==0.16.10", "build==1.6.1"]
+dev = [
+    "actionlint-py==1.7.12.25",
+    "check-manifest==0.51",
+    "click-compose==2026.9.16.1",
+    "coverage==7.16.2",
+    "deptry==0.25.1",
+    "doc8==2.0.0",
+    "doccmd==2026.9.16.1",
+    "interrogate==1.7.0",
+    "mypy==2.4.0",
+    "no-defaults==2026.9.1",
+    "prek==0.5.4",
+    "pydocstringformatter==1.0.0",
+    "pylint[spelling]==4.0.10",
+    "pylint-per-file-ignores==4.0.0",
+    "pyproject-fmt==2.29.4",
+    "pyrefly==1.3.2",
+    "pyright==1.1.414",
+    "pyroma==5.0.1",
+    "pytest==9.1.1",
+    "pytest-mypy-plugins==4.0.3",
+    "pyyaml==6.0.3",
+    "ruff==0.16.9",
+    # We add shellcheck-py not only for shell scripts and shell code blocks,
+    # but also because having it installed means that ``actionlint-py`` will
+    # use it to lint shell commands in GitHub workflow files.
+    "shellcheck-py==0.11.0.1",
+    "shfmt-py==4.2.0",
+    "snapper-fmt==0.11.7",
+    "sphinx-lint==1.0.2",
+    "strict-kwargs==2026.8.28.post2",
+    "towncrier==26.9.0",
+    "ty==0.0.84",
+    "vale==3.22.0.0",
+    "vulture==2.16",
+    "yamlfix==1.19.1",
+    "zizmor==1.30.1",
+]
+release = [ "check-wheel-contents==0.6.3", "towncrier==26.9.0" ]
 
-[tool.mypy]
-strict = true
-plugins = ["mypy.plugins.proper_plugin"]
-files = ["src", "tests"]
+[tool.setuptools]
+packages.find.where = [
+    "src",
+]
+package-data.mypy_pytest_parametrize = [
+    "py.typed",
+]
+zip-safe = false
+
+[tool.setuptools_scm]
+# This keeps the start of the version the same as the last release.
+# This is useful for our documentation to include e.g. binary links
+# to the latest released binary.
+#
+version_scheme = "post-release"
 
 [tool.ruff]
-extend-exclude = [".venv-*"]
-line-length = 88
-lint.select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+line-length = 79
+lint.select = [
+    "ALL",
+]
+lint.extend-select = [ "ANN", "PGH003", "PYI" ]
+lint.ignore = [
+    # Ruff warns that this conflicts with the formatter.
+    "COM812",
+    # The project copyright notice is in the LICENSE file.
+    "CPY001",
+    # Allow our chosen docstring line-style - pydocstringformatter handles formatting
+    # but doesn't enforce D205 (blank line after summary) or D212 (summary on first line).
+    "D205",
+    "D212",
+    # Ruff warns that this conflicts with the formatter.
+    "ISC001",
+    # Ignore 'too-many-*' errors as they seem to get in the way more than
+    # helping.
+    "PLR0913",
+]
+lint.explicit-preview-rules = true
+lint.per-file-ignores."doccmd_*.py" = [
+    # Allow our chosen docstring line-style - pydocstringformatter handles
+    # formatting but docstrings in docs may not match this style.
+    "D200",
+    # Allow asserts in docs.
+    "S101",
+]
+lint.per-file-ignores."tests/*" = [
+    # use of assert in tests
+    "S101",
+]
+# Do not automatically remove commented out code.
+# We comment out code during development, and with VSCode auto-save, this code
+# is sometimes annoyingly removed.
+lint.unfixable = [
+    "ERA001",
+]
+lint.external = [ "NOD" ]
+lint.flake8-tidy-imports.banned-api."operator.attrgetter".msg = "operator.attrgetter is banned: use a lambda instead."
+lint.flake8-tidy-imports.banned-api."typing.cast".msg = """\
+    typing.cast is banned: use explicit type narrowing or a typed variable instead.\
+    """
+lint.pydocstyle.convention = "google"
+lint.preview = true
+
+[tool.pylint]
+# Disable the message, report, category or checker with the given id(s). You
+# can either give multiple identifiers separated by comma (,) or put this
+# option multiple times (only on the command line, not in the configuration
+# file where it should appear only once).You can also use "--disable=all" to
+# disable everything first and then reenable specific checks. For example, if
+# you want to run only the similarities checker, you can use "--disable=all
+# --enable=similarities". If you want to run only the classes checker, but have
+# no Warning level messages displayed, use"--disable=all --enable=classes
+# --disable=W"
+"MESSAGES CONTROL".disable = [
+    # Too difficult to please
+    "duplicate-code",
+    # Let ruff handle long lines
+    "line-too-long",
+    "locally-disabled",
+    "missing-return-type-doc",
+    # We don't need everything to be documented because of mypy
+    "missing-type-doc",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-instance-attributes",
+    "too-many-lines",
+    "too-many-locals",
+    "too-many-return-statements",
+    # Let ruff deal with sorting
+    "ungrouped-imports",
+    # Let ruff handle unused imports
+    "unused-import",
+    # mypy does not want untyped parameters.
+    "useless-type-doc",
+    # Let ruff handle imports
+    "wrong-import-order",
+]
+# Enable the message, report, category or checker with the given id(s). You can
+# either give multiple identifier separated by comma (,) or put this option
+# multiple time (only on the command line, not in the configuration file where
+# it should appear only once). See also the "--disable" option for examples.
+"MESSAGES CONTROL".enable = [
+    "bad-inline-option",
+    "deprecated-pragma",
+    "file-ignored",
+    "spelling",
+    "use-symbolic-message-instead",
+    "useless-suppression",
+]
+# We ignore invalid names because:
+# - We want to use generated module names, which may not be valid, but are never seen.
+"MESSAGES CONTROL".per-file-ignores = [
+    "doccmd_README_rst_*.py:invalid-name",
+]
+DEPRECATED_BUILTINS.bad-functions = [
+    # Use Pylint until Ruff can ban bare builtin calls, or until custom rules
+    # make this removable:
+    # https://github.com/astral-sh/ruff/issues/10079
+    # https://github.com/astral-sh/ruff/issues/970
+    "filter",
+    "getattr",
+    "hasattr",
+    "map",
+    "setattr",
+]
+# Allow the body of an if to be on the same line as the test if there is no
+# else.
+FORMAT.single-line-if-stmt = false
+# Return non-zero exit code if useless-suppression is emitted.
+MAIN.fail-on = [
+    "useless-suppression",
+]
+MASTER.extension-pkg-allow-list = [
+    "mypy",
+]
+# Use multiple processes to speed up Pylint.
+MASTER.jobs = 0
+# List of plugins (as comma separated values of python modules names) to load,
+# usually to register additional checkers.
+# See https://chezsoi.org/lucas/blog/pylint-strict-base-configuration.html.
+# and we also add `pylint_per_file_ignores` to allow per-file ignores.
+# We do not use the plugins:
+# - pylint.extensions.code_style
+# - pylint.extensions.magic_value
+# - pylint.extensions.while_used
+# as they seemed to get in the way.
+MASTER.load-plugins = [
+    "pylint.extensions.bad_builtin",
+    "pylint.extensions.comparison_placement",
+    "pylint.extensions.consider_refactoring_into_while_condition",
+    "pylint.extensions.docparams",
+    "pylint.extensions.dunder",
+    "pylint.extensions.eq_without_hash",
+    "pylint.extensions.for_any_all",
+    "pylint.extensions.mccabe",
+    "pylint.extensions.no_self_use",
+    "pylint.extensions.overlapping_exceptions",
+    "pylint.extensions.private_import",
+    "pylint.extensions.redefined_loop_name",
+    "pylint.extensions.redefined_variable_type",
+    "pylint.extensions.set_membership",
+    "pylint.extensions.typing",
+    "pylint_per_file_ignores",
+]
+# Pickle collected data for later comparisons.
+MASTER.persistent = true
+# Allow loading of arbitrary C extensions. Extensions are imported into the
+# active Python interpreter and may run arbitrary code.
+MASTER.unsafe-load-any-extension = false
+# Spelling dictionary name. Available dictionaries: none. To make it working
+# install python-enchant package.
+SPELLING.spelling-dict = "en_US"
+# A path to a file that contains private dictionary; one word per line.
+SPELLING.spelling-private-dict-file = "spelling_private_dict.txt"
+# Tells whether to store unknown words to indicated private dictionary in
+# --spelling-private-dict-file option instead of raising a message.
+SPELLING.spelling-store-unknown-words = "no"
+
+[tool.interrogate]
+fail-under = 100
+verbose = 2
+omit-covered-files = true
+
+[tool.check-manifest]
+ignore = [
+    "*.enc",
+    ".checkmake-config.ini",
+    ".git_archival.txt",
+    ".prettierrc",
+    ".vale.ini",
+    ".vscode/*",
+    ".yamlfmt",
+    "CHANGELOG.rst",
+    "ci",
+    "ci/**",
+    "CODE_OF_CONDUCT.rst",
+    "CONTRIBUTING.rst",
+    "docs",
+    "docs/**",
+    "LICENSE",
+    "lint.mk",
+    "Makefile",
+    "newsfragments",
+    "newsfragments/**",
+    "prek.toml",
+    "readthedocs.yaml",
+    "spelling_private_dict.txt",
+    "styles/snapper/**",
+    "tests",
+    "tests-pylintrc",
+    "tests/**",
+    "towncrier_template.rst.jinja",
+    "zizmor.yml",
+]
+
+[tool.deptry]
+# Pytest provides the typed marker API inspected by the plugin.
+per_rule_ignores.DEP002 = [ "pytest" ]
+
+[tool.vulture]
+# Duplicate some of .gitignore
+exclude = [ ".venv" ]
+ignore_names = [
+    # mypy hooks:
+    # https://mypy.readthedocs.io/en/latest/extending_mypy.html#current-list-of-plugin-hooks.
+    "get_attribute_hook",
+    "get_base_class_hook",
+    "get_function_hook",
+    "get_function_signature_hook",
+    "get_method_hook",
+    "get_method_signature_hook",
+    "report_config_data",
+]
+
+[tool.pyproject-fmt]
+indent = 4
+keep_full_version = true
+max_supported_python = "3.14"
+
+[tool.mypy]
+files = [ "." ]
+exclude = [ "build" ]
+exclude_gitignore = true
+follow_untyped_imports = true
+strict = true
+plugins = [
+    "mypy_pytest_parametrize",
+    # See
+    # https://mypy.readthedocs.io/en/latest/extending_mypy.html#useful-tools.
+    "mypy.plugins.proper_plugin",
+]
+num_workers = "auto"
+
+[tool.pyrefly]
+errors.non-exhaustive-match = "error"
+enabled-ignores = [ "pyrefly" ]
+preset = "all"
+
+[tool.pyright]
+typeCheckingMode = "strict"
+enableTypeIgnoreComments = false
+# See
+# https://github.com/microsoft/pyright/issues/9617#issuecomment-2558167677.
+# This defines as a constant a variable in the ``mypy`` source code which is
+# used to configure a type hint.
+defineConstant = { MYPYC = false }
+reportUnnecessaryTypeIgnoreComment = true
+
+[tool.ty]
+rules.all = "error"
+# Error if ty emits any warning-level diagnostics.
+terminal.error-on-warning = true
+# Disable support for `type: ignore` comments
+analysis.respect-type-ignore-comments = false
+analysis.strict-equality-semantics = true
+analysis.strict-generic-narrowing = true
 
 [tool.pytest]
-testpaths = ["tests"]
+# Use the same process so that we can get coverage.
+#  * --mypy-same-process
+#  * The help documentation says that this "will create problems with import cache"
+addopts = [ "--mypy-same-process" ]
+log_cli = true
+xfail_strict = true
 
-[tool.coverage.run]
-branch = true
-source = ["mypy_pytest_parametrize"]
+[tool.coverage]
+run.source = [ "src/", "tests/" ]
+run.branch = true
+run.parallel = true
+run.relative_files = true
+report.fail_under = 100
+report.exclude_also = [
+    "case _ as unreachable:\n\\s*assert_never\\(",
+    "if TYPE_CHECKING:",
+]
+report.show_missing = true
+
+[tool.towncrier]
+# The changelog and the per-release GitHub release notes are both built
+# from news fragments under ``newsfragments/``.  The release workflow
+# runs ``towncrier build`` to assemble them; contributors add one
+# fragment file per user-facing change.
+directory = "newsfragments"
+filename = "CHANGELOG.rst"
+# Custom template so an assembled version reproduces the historical
+# style exactly: a bare ``<version>`` heading (no project name, no
+# date) followed by a flat bullet list with no per-type sub-headings.
+template = "towncrier_template.rst.jinja"
+title_format = "{version}"
+issue_format = "#{issue}"
+# ``title_format`` underline first, then any nested headings.  A bare
+# version such as ``2026.05.18`` underlined with ``-`` matches every
+# pre-towncrier entry in CHANGELOG.rst.
+underlines = [ "-", "~", "^" ]
+# Setting ``ignore`` makes ``towncrier build`` fail on any file in
+# the fragment directory whose suffix is not a declared fragment
+# type, instead of silently dropping it.  Only the listed
+# non-fragment files are allowed through.
+ignore = [ ".gitkeep" ]
+type = [
+    # A single, unnamed fragment type keeps the assembled output as one
+    # flat bullet list, matching the historical changelog (which never
+    # grouped entries under "Features"/"Bugfixes"/... sub-headings).
+    { directory = "change", name = "", showcontent = true },
+]
+
+[tool.pydocstringformatter]
+write = true
+split-summary-body = false
+max-line-length = 75
+linewrap-full-docstring = true
+
+[tool.doc8]
+max_line_length = 2000
+ignore_path = [
+    "./.eggs",
+    "./docs/build",
+    "./docs/build/spelling/output.txt",
+    "./node_modules",
+    "./src/*.egg-info/",
+    "./src/*/_setuptools_scm_version.txt",
+]
+
+[tool.yamlfix]
+section_whitelines = 1
+whitelines = 1
+
+[tool.no_defaults]
+private_only = true
+per_file_enforcement."tests/**" = "all"
