@@ -4,9 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 # Initialize the plugin API before helpers with cyclic dependencies.
-from mypy.plugin import MethodContext, Plugin
-
-# isort: split
+from mypy import plugin as mypy_plugin
 from mypy.errorcodes import ErrorCode
 from mypy.maptype import map_instance_to_supertype
 from mypy.messages import format_type
@@ -62,7 +60,7 @@ def _argument(call: CallExpr, name: str, position: int) -> Expression | None:
     return None
 
 
-def _string(expr: Expression, ctx: MethodContext) -> str | None:
+def _string(expr: Expression, ctx: mypy_plugin.MethodContext) -> str | None:
     """Read a literal string, including a Final literal alias."""
     if isinstance(expr, StrExpr):
         return expr.value
@@ -74,7 +72,9 @@ def _string(expr: Expression, ctx: MethodContext) -> str | None:
     return None
 
 
-def _strings(expr: Expression, ctx: MethodContext) -> list[str] | None:
+def _strings(
+    expr: Expression, ctx: mypy_plugin.MethodContext
+) -> list[str] | None:
     """Read a literal sequence of strings."""
     if not isinstance(expr, (ListExpr, TupleExpr)):
         return None
@@ -88,7 +88,7 @@ def _strings(expr: Expression, ctx: MethodContext) -> list[str] | None:
 
 
 def _names(
-    expr: Expression, ctx: MethodContext
+    expr: Expression, ctx: mypy_plugin.MethodContext
 ) -> tuple[list[str], bool] | None:
     """Return parameter names and pytest's single-value wrapping rule."""
     text = _string(expr=expr, ctx=ctx)
@@ -101,7 +101,9 @@ def _names(
     return None if sequence is None else (sequence, False)
 
 
-def _indirect(expr: Expression | None, ctx: MethodContext) -> list[str] | None:
+def _indirect(
+    expr: Expression | None, ctx: mypy_plugin.MethodContext
+) -> list[str] | None:
     """Return excluded names, or None when fixture routing is not
     static.
     """
@@ -120,7 +122,7 @@ def _check_type(
     expected: Type,
     name: str,
     location: Context,
-    ctx: MethodContext,
+    ctx: mypy_plugin.MethodContext,
 ) -> None:
     """Report a value that cannot be assigned to its annotated test
     parameter.
@@ -136,7 +138,7 @@ def _check_type(
 
 
 def _check_value(
-    expr: Expression, expected: Type, name: str, ctx: MethodContext
+    expr: Expression, expected: Type, name: str, ctx: mypy_plugin.MethodContext
 ) -> None:
     """Infer literals in the annotation's context, like a normal function
     call.
@@ -148,7 +150,10 @@ def _check_value(
 
 
 def _arity(
-    size: int, names: list[str], location: Context, ctx: MethodContext
+    size: int,
+    names: list[str],
+    location: Context,
+    ctx: mypy_plugin.MethodContext,
 ) -> bool:
     """Check a statically known row's number of values."""
     if size == len(names):
@@ -197,7 +202,7 @@ def _check_items(
     items: list[Type],
     parameters: _Parameters,
     location: Context,
-    ctx: MethodContext,
+    ctx: mypy_plugin.MethodContext,
 ) -> None:
     """Check positional row types against their corresponding
     annotations.
@@ -223,7 +228,7 @@ def _check_row_type(
     typ: Type,
     parameters: _Parameters,
     location: Context,
-    ctx: MethodContext,
+    ctx: mypy_plugin.MethodContext,
 ) -> None:
     """Check rows from named collections without evaluating their
     values.
@@ -285,7 +290,10 @@ def _param_values(call: CallExpr) -> list[Expression] | None:
 
 
 def _check_expressions(
-    *, values: list[Expression], parameters: _Parameters, ctx: MethodContext
+    *,
+    values: list[Expression],
+    parameters: _Parameters,
+    ctx: mypy_plugin.MethodContext,
 ) -> None:
     """Check explicit values in the context of their test annotations."""
     for name, value in zip(parameters.names, values, strict=True):
@@ -295,7 +303,7 @@ def _check_expressions(
 
 
 def _check_row(
-    *, row: Expression, parameters: _Parameters, ctx: MethodContext
+    *, row: Expression, parameters: _Parameters, ctx: mypy_plugin.MethodContext
 ) -> None:
     """Unpack explicit pytest.param calls and tuple-style rows."""
     if (
@@ -338,7 +346,10 @@ def _check_row(
 
 
 def _check_values(
-    *, values: Expression, parameters: _Parameters, ctx: MethodContext
+    *,
+    values: Expression,
+    parameters: _Parameters,
+    ctx: mypy_plugin.MethodContext,
 ) -> None:
     """Check inline values or use a collection's inferred item type."""
     if isinstance(values, (ListExpr, TupleExpr)):
@@ -363,7 +374,7 @@ def _check_values(
 
 
 def _check_decorator(
-    call: CallExpr, signature: CallableType, ctx: MethodContext
+    call: CallExpr, signature: CallableType, ctx: mypy_plugin.MethodContext
 ) -> None:
     """Associate direct parameter names with the test's original
     annotations.
@@ -411,7 +422,7 @@ def _check_decorator(
         )
 
 
-def _check_mark(ctx: MethodContext) -> Type:
+def _check_mark(ctx: mypy_plugin.MethodContext) -> Type:
     """Inspect a mark application without altering the decorated function
     type.
     """
@@ -440,7 +451,7 @@ def _check_mark(ctx: MethodContext) -> Type:
     return ctx.default_return_type
 
 
-class ParametrizePlugin(Plugin):
+class ParametrizePlugin(mypy_plugin.Plugin):
     """Validate pytest marks when mypy applies decorators to test
     functions.
     """
@@ -448,11 +459,11 @@ class ParametrizePlugin(Plugin):
     @override
     def get_method_hook(
         self, fullname: str
-    ) -> Callable[[MethodContext], Type] | None:
+    ) -> Callable[[mypy_plugin.MethodContext], Type] | None:
         """Register only the pytest mark application hook."""
         return _check_mark if fullname == _MARK_CALL else None
 
 
-def plugin(_version: str) -> type[Plugin]:
+def plugin(_version: str) -> type[mypy_plugin.Plugin]:
     """Return the plugin class for mypy's configured entry point."""
     return ParametrizePlugin
