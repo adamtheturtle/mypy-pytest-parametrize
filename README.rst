@@ -39,8 +39,6 @@ Installation
 
    pip install mypy-pytest-parametrize
 
-This is tested on Python 3.11+ with ``mypy`` 2.4 and ``pytest`` 9.1+.
-
 Configure ``mypy`` to use the plugin
 ------------------------------------
 
