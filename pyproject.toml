@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mypy-pytest-parametrize"
+version = "0.1.0"
+description = "Check pytest parametrized values against test annotations with mypy."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "Adam Dangoor", email = "adamdangoor@gmail.com"}]
+dependencies = ["mypy>=2.4,<2.5", "pytest>=9.1,<10"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Pytest",
+    "Programming Language :: Python :: 3 :: Only",
+    "Typing :: Typed",
+]
+
+[dependency-groups]
+dev = ["pytest-cov==7.1.0", "ruff==0.16.10", "build==1.6.1"]
+
+[tool.mypy]
+strict = true
+plugins = ["mypy.plugins.proper_plugin"]
+files = ["src", "tests"]
+
+[tool.ruff]
+extend-exclude = [".venv-*"]
+line-length = 88
+lint.select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.pytest]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["mypy_pytest_parametrize"]
