@@ -25,7 +25,7 @@ Tests must use real ``mypy`` checks and preserve the decorated function's signat
 Releases
 --------
 
-Add user-facing changes to ``newsfragments/<issue>.change.md.rst``.
+Add user-facing changes to ``newsfragments/<issue>.change.md``.
 The manually dispatched ``Release`` workflow uses CalVer versions and Towncrier release notes.
 It builds the distributions and publishes them to PyPI.
 PyPI publishing requires a trusted publisher configured for this repository, ``release.yml``, and the ``release`` environment.
