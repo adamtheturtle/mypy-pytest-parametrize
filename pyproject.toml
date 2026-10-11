@@ -53,7 +53,7 @@ dev = [
     "doc8==2.0.0",
     "doccmd==2026.9.16.1",
     "interrogate==1.7.0",
-    "karva==0.0.1a12",
+    "karva==0.0.1a13",
     "mypy==2.4.0",
     "no-defaults==2026.9.1",
     "prek==0.5.5",
