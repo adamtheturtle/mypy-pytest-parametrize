@@ -34,7 +34,7 @@ dynamic = [
     "version",
 ]
 dependencies = [
-    "mypy>=2.4.0,<2.5",
+    "mypy<2.5,>=2.4.0",
     "pytest>=9.1.0,<10",
     "typing-extensions>=4.4.0",
 ]
@@ -54,7 +54,7 @@ dev = [
     "doccmd==2026.9.16.1",
     "interrogate==1.7.0",
     "karva==0.0.1a13",
-    "mypy==2.4.0",
+    "mypy==2.4.1",
     "no-defaults==2026.9.1",
     "prek==0.5.7",
     "pydocstringformatter==1.0.0",
