@@ -35,7 +35,7 @@ dynamic = [
 ]
 dependencies = [
     "mypy<2.5,>=2.4.0",
-    "pytest>=9.1.0,<10",
+    "pytest<10,>=9.1.0",
     "typing-extensions>=4.4.0",
 ]
 urls.Documentation = "https://github.com/adamtheturtle/mypy-pytest-parametrize#readme"
@@ -64,7 +64,7 @@ dev = [
     "pyrefly==1.4.0",
     "pyright==1.1.414",
     "pyroma==5.0.1",
-    "pytest==9.1.1",
+    "pytest==9.2.0",
     "pytest-mypy-plugins==4.1.0",
     "pyyaml==6.0.3",
     "ruff==0.17.3",
