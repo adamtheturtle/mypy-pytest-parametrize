@@ -34,7 +34,7 @@ from mypy.types import (
 )
 from typing_extensions import override
 
-PARAMETRIZE = ErrorCode(
+PARAMETRIZE: ErrorCode = ErrorCode(
     code="pytest-parametrize",
     description="Invalid direct pytest or Karva parametrization",
     category="General",
