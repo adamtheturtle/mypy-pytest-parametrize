@@ -68,7 +68,7 @@ The same plugin configuration checks `Karva <https://github.com/MatthewMckee4/ka
 It supports Karva's ``arg_names`` and ``arg_values`` keywords, stacked tags, and inline ``karva.param`` calls with IDs or tags.
 Karva must be installed in the environment where ``mypy`` runs.
 
-For a single parameter, Karva treats each row as the parameter's value even when the name is supplied as a list or tuple.
+For one parameter, Karva treats each row as the parameter's value even when the name is supplied as a list or tuple.
 For example, ``@karva.tags.parametrize(["value"], [(1, "x")])`` supplies a ``tuple[int, str]`` to ``value``.
 
 Karva diagnostics use the existing ``pytest-parametrize`` error code.
@@ -76,7 +76,7 @@ Karva diagnostics use the existing ``pytest-parametrize`` error code.
 Indirect fixtures and static limits
 -----------------------------------
 
-``indirect=True`` is excluded because its values are fixture inputs, rather than the values received by the test.
+``indirect=True`` is excluded because pytest supplies the values as fixture inputs.
 With ``indirect=["fixture_name"]``, the other parameters are still checked.
 
 Parameter names and fixture routing determined at runtime are not checked.
